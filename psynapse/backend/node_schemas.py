@@ -12,15 +12,27 @@ from psynapse.utils import (
 _SCHEMA_CACHE: List[Dict[str, Any]] = []
 
 
-def _get_project_root() -> Path:
-    """Get the project root directory by finding the directory containing pyproject.toml."""
+def _get_nodepacks_dir() -> Path:
+    """Get the nodepacks directory, checking installed package location first."""
+    # First, try to find nodepacks within the installed package
+    package_nodepacks = Path(__file__).resolve().parent.parent / "nodepacks"
+    if package_nodepacks.exists():
+        return package_nodepacks
+    
+    # Fallback: Look for project root (for editable installs)
     current = Path(__file__).resolve().parent
     while current != current.parent:
+        nodepacks_dir = current / "nodepacks"
+        if nodepacks_dir.exists():
+            return nodepacks_dir
         if (current / "pyproject.toml").exists():
-            return current
+            nodepacks_dir = current / "nodepacks"
+            if nodepacks_dir.exists():
+                return nodepacks_dir
         current = current.parent
-    # Fallback to current working directory
-    return Path.cwd()
+    
+    # Final fallback: current working directory
+    return Path.cwd() / "nodepacks"
 
 
 def populate_node_schemas() -> List[Dict[str, Any]]:
@@ -32,12 +44,7 @@ def populate_node_schemas() -> List[Dict[str, Any]]:
         return _SCHEMA_CACHE
 
     node_schemas = []
-    project_root = _get_project_root()
-    nodepacks_dir = project_root / "nodepacks"
-
-    if not nodepacks_dir.exists():
-        # Try current working directory as fallback
-        nodepacks_dir = Path.cwd() / "nodepacks"
+    nodepacks_dir = _get_nodepacks_dir()
 
     if nodepacks_dir.exists():
         # Iterate through subdirectories in nodepacks
