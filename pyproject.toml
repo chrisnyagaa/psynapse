@@ -66,6 +66,9 @@ source = "vcs"
 
 [tool.hatch.build.targets.wheel]
 packages = ["psynapse"]
+artifacts = [
+    "psynapse/nodepacks/**/*",
+]
 
 [tool.ruff]
 target-version = "py312"
